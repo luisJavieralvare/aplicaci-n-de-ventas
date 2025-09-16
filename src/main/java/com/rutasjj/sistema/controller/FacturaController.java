@@ -1,37 +1,63 @@
 package com.rutasjj.sistema.controller;
 
+import com.rutasjj.sistema.model.Factura;
+import com.rutasjj.sistema.repository.FacturaRepository;
 import com.rutasjj.sistema.service.FacturaService;
-import com.rutasjj.sistema.service.ProductoFactura;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
-import java.util.Arrays;
-import java.util.List;
+import java.time.LocalDate;
+import java.util.Map;
 
 @RestController
+@RequestMapping("/api/facturas")
 public class FacturaController {
 
     @Autowired
     private FacturaService facturaService;
 
-    @GetMapping("/factura")
-    public ResponseEntity<byte[]> generarFactura() {
-        // 🔹 Simulación de productos (esto luego se traerá de la BD)
-        List<ProductoFactura> productos = Arrays.asList(
-                new ProductoFactura("Arroz", 5, 2500),
-                new ProductoFactura("Aceite", 2, 8000),
-                new ProductoFactura("Azúcar", 3, 4000)
-        );
+    @Autowired
+    private FacturaRepository facturaRepository;
 
-        ByteArrayInputStream bis = facturaService.generarFactura("Juan Pérez", productos);
+    // DTO simple para el cuerpo de la solicitud de generación de factura
+    public static class GenerarFacturaRequest {
+        public Integer id_trabajador;
+        public String fecha; // Formato YYYY-MM-DD
+    }
+
+    @PostMapping("/generar")
+    public ResponseEntity<?> generarFactura(@RequestBody GenerarFacturaRequest request) {
+        try {
+            LocalDate fecha = LocalDate.parse(request.fecha);
+            Factura facturaGuardada = facturaService.generarYGuardarFactura(request.id_trabajador, fecha);
+            
+            // Devuelve un resumen de la factura creada
+            return ResponseEntity.ok(Map.of(
+                "id_factura", facturaGuardada.getId(),
+                "total", facturaGuardada.getTotal(),
+                "mensaje", "Factura generada y guardada correctamente."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> descargarFacturaPdf(@PathVariable Integer id) {
+        Factura factura = facturaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Factura no encontrada con el ID: " + id));
+
+        ByteArrayInputStream bis = facturaService.generarPdfDeFactura(factura);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=factura_" + id + ".pdf");
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=factura.pdf")
+                .headers(headers)
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(bis.readAllBytes());
     }
