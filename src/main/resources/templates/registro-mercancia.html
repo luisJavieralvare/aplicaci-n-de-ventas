@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout}">
+<head>
+    <title>Registro de Mercancía</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2>Registro de Mercancía del Día</h2>
+    <p>Hola <strong sec:authentication="name"></strong>, aquí puedes gestionar tu inventario diario.</p>
+
+    <div id="mensaje" class="alert mt-3" style="display: none;"></div>
+
+    <div class="card p-4 my-4">
+        <h4>1. Registrar Mercancía Llevada</h4>
+        <form id="formLlevada">
+            <div class="mb-3">
+                <label for="productoLlevado" class="form-label">Producto:</label>
+                <select id="productoLlevado" class="form-select" required>
+                    <option value="">Selecciona un producto...</option>
+                    <option th:each="p : ${productos}" th:value="${p.id}" th:text="${p.nombre} + ' (Stock: ' + ${p.stock} + ')'"></option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="cantidadLlevada" class="form-label">Cantidad que te llevas:</label>
+                <input type="number" id="cantidadLlevada" class="form-control" required min="1">
+            </div>
+            <button type="submit" class="btn btn-primary">Registrar Salida</button>
+        </form>
+    </div>
+
+    <div class="card p-4 my-4">
+        <h4>2. Registrar Mercancía Devuelta al Final del Día</h4>
+        <div th:if="${mercanciaLlevada.isEmpty()}">
+            <p class="text-muted">Aún no has registrado ninguna salida de mercancía hoy.</p>
+        </div>
+        <table class="table" th:if="${!mercanciaLlevada.isEmpty()}">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad Llevada</th>
+                    <th>Cantidad a Devolver</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="merc : ${mercanciaLlevada}">
+                    <td th:text="${merc.producto.nombre}"></td>
+                    <td th:text="${merc.cantidad}"></td>
+                    <td>
+                        <input type="number" class="form-control" th:id="'devuelta-' + ${merc.producto.id}" min="0" th:max="${merc.cantidad}" placeholder="Ej: 5">
+                    </td>
+                    <td>
+                        <button class="btn btn-success btn-sm" th:onclick="registrarDevolucion([[${merc.producto.id}]])">Registrar Devolución</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <script th:inline="javascript">
+        const formLlevada = document.getElementById('formLlevada');
+        const mensajeDiv = document.getElementById('mensaje');
+
+        // Lógica para registrar mercancía LLEVADA
+        formLlevada.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const data = {
+                productoId: parseInt(document.getElementById('productoLlevado').value),
+                cantidad: parseInt(document.getElementById('cantidadLlevada').value)
+            };
+            const response = await fetch('/mercancia/api/registrar-llevada', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            mostrarMensaje(response, "¡No olvides registrar tus devoluciones al final del día!");
+        });
+
+        // Lógica para registrar mercancía DEVUELTA
+        async function registrarDevolucion(productoId) {
+            const cantidadInput = document.getElementById(`devuelta-${productoId}`);
+            const cantidad = parseInt(cantidadInput.value);
+            if (isNaN(cantidad) || cantidad < 0) {
+                alert('Por favor, introduce una cantidad válida.');
+                return;
+            }
+            const data = { productoId, cantidad };
+            const response = await fetch('/mercancia/api/registrar-devolucion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            mostrarMensaje(response, "¡Devolución registrada! Tus ganancias del día ya se pueden calcular.");
+        }
+
+        // Función de ayuda para mostrar mensajes
+        async function mostrarMensaje(response, mensajeExitoExtra) {
+            if (response.ok) {
+                const textoRespuesta = await response.text();
+                mensajeDiv.className = 'alert alert-success';
+                mensajeDiv.textContent = textoRespuesta + " " + mensajeExitoExtra;
+                mensajeDiv.style.display = 'block';
+                setTimeout(() => { window.location.reload(); }, 3000);
+            } else {
+                const errorTexto = await response.text();
+                mensajeDiv.className = 'alert alert-danger';
+                mensajeDiv.textContent = 'Error: ' + errorTexto;
+                mensajeDiv.style.display = 'block';
+            }
+        }
+    </script>
+</div>
+</body>
+</html>

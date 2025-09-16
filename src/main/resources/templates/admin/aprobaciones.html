@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{/layout}">
+<head>
+    <title>Aprobar Registros</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2>Aprobar Registros de Trabajadores</h2>
+    <p>Aquí se listan los trabajadores que se han registrado y están esperando tu aprobación para acceder al sistema.</p>
+
+    <div class="card p-4">
+        <h4>Solicitudes Pendientes</h4>
+        <div th:if="${usuarios.isEmpty()}">
+            <p class="text-muted">No hay solicitudes pendientes en este momento.</p>
+        </div>
+
+        <table class="table table-striped" th:if="${!usuarios.isEmpty()}">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Correo Electrónico</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="usuario : ${usuarios}">
+                    <td th:text="${usuario.nombre}"></td>
+                    <td th:text="${usuario.correo}"></td>
+                    <td><span class="badge bg-warning text-dark" th:text="${usuario.estado}"></span></td>
+                    <td>
+                        <form th:action="@{/admin/usuarios/aprobar/{id}(id=${usuario.id})}" method="post">
+                            <button type="submit" class="btn btn-success btn-sm">Aprobar</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -7,6 +7,11 @@
 </head>
 <body class="container mt-5">
     <h2>Registro de Trabajador</h2>
+
+    <div th:if="${param.success}" class="alert alert-success" role="alert">
+      ¡Registro exitoso! Un administrador revisará tu solicitud y la aprobará pronto.
+    </div>
+
     <form th:action="@{/register}" th:object="${usuario}" method="post">
         <div class="mb-3">
             <label for="nombre" class="form-label">Nombre Completo</label>

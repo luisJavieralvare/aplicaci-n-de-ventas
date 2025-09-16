@@ -1,6 +1,7 @@
 package com.rutasjj.sistema.controller;
 
 import com.rutasjj.sistema.model.Rol;
+import com.rutasjj.sistema.model.Trabajador;
 import com.rutasjj.sistema.model.Usuario;
 import com.rutasjj.sistema.repository.RolRepository;
 import com.rutasjj.sistema.repository.UsuarioRepository;
@@ -33,12 +34,23 @@ public class RegistroController {
 
     @PostMapping
     public String registrarUsuario(Usuario usuario) {
-        // Asigna el rol de trabajador por defecto
+        // 1. Crear la entidad Trabajador a partir de los datos del usuario
+        Trabajador nuevoTrabajador = new Trabajador();
+        nuevoTrabajador.setNombre(usuario.getNombre());
+        nuevoTrabajador.setDisponible(true);
+
+        // 2. Vincular el nuevo Trabajador con el Usuario
+        usuario.setTrabajador(nuevoTrabajador);
+
+        // 3. El resto de la lógica para guardar el usuario
         Rol rol = rolRepository.findByNombre("TRABAJADOR");
         usuario.setRol(rol);
-        // Cifra la contraseña antes de guardarla
         usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
+        usuario.setEstado(Usuario.EstadoCuenta.PENDIENTE);
+        
+        // Al guardar el usuario, JPA guardará también el trabajador asociado gracias a CascadeType.ALL
         usuarioRepository.save(usuario);
-        return "redirect:/login"; // Redirige al login después del registro
+        
+        return "redirect:/login?registered";
     }
 }

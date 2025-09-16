@@ -5,17 +5,32 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
+
+    public enum EstadoCuenta {
+        PENDIENTE,
+        APROBADO
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     private String nombre;
     private String correo;
-    private String contrasena; // La contraseña se debe guardar cifrada
+    private String contrasena;
 
     @ManyToOne
     @JoinColumn(name = "rol_id")
     private Rol rol;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoCuenta estado;
+
+    // Relación con Trabajador
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "id_trabajador", referencedColumnName = "id_trabajador")
+    private Trabajador trabajador;
 
     // Getters y Setters
     public Integer getId() {
@@ -56,5 +71,21 @@ public class Usuario {
 
     public void setRol(Rol rol) {
         this.rol = rol;
+    }
+
+    public EstadoCuenta getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoCuenta estado) {
+        this.estado = estado;
+    }
+
+    public Trabajador getTrabajador() {
+        return trabajador;
+    }
+
+    public void setTrabajador(Trabajador trabajador) {
+        this.trabajador = trabajador;
     }
 }

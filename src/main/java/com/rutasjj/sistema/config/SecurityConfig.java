@@ -1,9 +1,11 @@
 package com.rutasjj.sistema.config;
 
+import org.springframework.beans.factory.annotation.Autowired; // ¡NUEVO!
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -11,23 +13,27 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired // ¡NUEVO!
+    private CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/register", "/css/**", "/js/**").permitAll() // URLs públicas
-                .requestMatchers("/admin/**").hasRole("ADMIN") // Solo admin
-                .requestMatchers("/trabajador/**").hasRole("TRABAJADOR") // Solo trabajador
-                .anyRequest().authenticated() // Cualquier otra URL requiere autenticación
+                .requestMatchers("/", "/register", "/login", "/images/**", "/css/**", "/js/**", "/api/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/trabajador/**", "/mercancia/registro").hasRole("TRABAJADOR") // Añadimos permiso
+                .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/", true) // Redirige aquí después de iniciar sesión
+                .successHandler(customAuthenticationSuccessHandler) // ¡CAMBIO CLAVE! Usamos nuestro manejador
                 .permitAll()
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/login?logout") // Redirige aquí después de cerrar sesión
+                .logoutSuccessUrl("/?logout")
                 .permitAll()
             );
         return http.build();

@@ -1,65 +1,68 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
 <head>
-    <meta charset="UTF-8">
     <title>Gestión de Productos</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
-<body class="container mt-5">
-    <h2>Gestión de Productos</h2>
+<body>
+    <div layout:fragment="content">
+        <h2>Gestión de Productos</h2>
+        <a href="/reportes" class="btn btn-info mb-3">Ver Reporte Semanal</a>
 
-    <div class="card p-4 my-4">
-        <h4>Agregar Nuevo Producto</h4>
-        <form th:action="@{/productos/guardar}" th:object="${nuevoProducto}" method="post">
-            <div class="mb-3">
-                <label for="nombre" class="form-label">Nombre</label>
-                <input type="text" id="nombre" th:field="*{nombre}" class="form-control" required>
-            </div>
-            <div class="mb-3">
-                <label for="precio" class="form-label">Precio</label>
-                <input type="number" id="precio" th:field="*{precio}" class="form-control" step="0.01" required>
-            </div>
-            <div class="mb-3">
-                <label for="stock" class="form-label">Stock</label>
-                <input type="number" id="stock" th:field="*{stock}" class="form-control" required>
-            </div>
-            <div class="mb-3">
-                <label for="categoria" class="form-label">Categoría</label>
-                <select id="categoria" th:field="*{categoria}" class="form-control" required>
-                    <option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nombre}"></option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Guardar Producto</button>
-        </form>
-    </div>
+        <div class="card p-4 my-4">
+            <h4>Agregar Nuevo Producto</h4>
+            <form th:action="@{/productos/guardar}" th:object="${nuevoProducto}" method="post">
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre</label>
+                    <input type="text" id="nombre" th:field="*{nombre}" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="precio" class="form-label">Precio</label>
+                    <input type="number" id="precio" th:field="*{precio}" class="form-control" step="0.01" required>
+                </div>
+                <div class="mb-3">
+                    <label for="stock" class="form-label">Stock</label>
+                    <input type="number" id="stock" th:field="*{stock}" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="categoria" class="form-label">Categoría</label>
+                    <select id="categoria" th:field="*{categoria}" class="form-control" required>
+                        <option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nombre}"></option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar Producto</button>
+            </form>
+        </div>
 
-    <div class="card p-4">
-        <h4>Lista de Productos</h4>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                    <th>Categoría</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="prod : ${productos}">
-                    <td th:text="${prod.id}"></td>
-                    <td th:text="${prod.nombre}"></td>
-                    <td th:text="${prod.precio}"></td>
-                    <td th:text="${prod.stock}"></td>
-                    <td th:text="${prod.categoria.nombre}"></td>
-                    <td>
-                        <a th:href="@{/productos/editar/{id}(id=${prod.id})}" class="btn btn-warning btn-sm">Editar</a>
-                        <a th:href="@{/productos/eliminar/{id}(id=${prod.id})}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que quieres eliminar este producto?');">Eliminar</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="card p-4">
+            <h4>Lista de Productos</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Categoría</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="prod : ${productos}">
+                        <td th:text="${prod.id}"></td>
+                        <td th:text="${prod.nombre}"></td>
+                        <td th:text="${prod.precio}"></td>
+                        <td th:text="${prod.stock}"></td>
+                        <td th:text="${prod.categoria.nombre}"></td>
+                        <td>
+                            <a th:href="@{/productos/editar/{id}(id=${prod.id})}" class="btn btn-warning btn-sm">Editar</a>
+                            <a th:href="@{/productos/eliminar/{id}(id=${prod.id})}" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que quieres eliminar este producto?');">Eliminar</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>

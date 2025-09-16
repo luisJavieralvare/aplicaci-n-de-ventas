@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Reporte Semanal de Ventas</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div layout:fragment="content">
+        <h2>Reporte Semanal de Ventas</h2>
+
+        <div class="card p-4 my-4">
+            <h4>Seleccionar Semana</h4>
+            <div class="mb-3">
+                <label for="fecha" class="form-label">Elige cualquier día de la semana que quieras consultar:</label>
+                <input type="date" id="fecha" class="form-control" th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
+            </div>
+            <button id="generarReporte" class="btn btn-primary">Generar Reporte</button>
+        </div>
+
+        <div id="resultadoReporte" class="card p-4" style="display: none;">
+            <h4>Resultados de la semana del <span id="fechaInicio"></span> al <span id="fechaFin"></span></h4>
+            <p><strong>Total Vendido:</strong> <span id="totalVentas"></span></p>
+            <p><strong>Número de Facturas:</strong> <span id="numFacturas"></span></p>
+            
+            <div>
+                <canvas id="graficoVentas"></canvas>
+            </div>
+        </div>
+
+        <script>
+            const generarReporteBtn = document.getElementById('generarReporte');
+            const fechaInput = document.getElementById('fecha');
+            const resultadoDiv = document.getElementById('resultadoReporte');
+            let grafico;
+
+            generarReporteBtn.addEventListener('click', async () => {
+                const fecha = fechaInput.value;
+                if (!fecha) {
+                    alert('Por favor, selecciona una fecha.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/reportes/api/semanal?fecha=${fecha}`);
+                    const data = await response.json();
+
+                    document.getElementById('fechaInicio').textContent = data.fechaInicio;
+                    document.getElementById('fechaFin').textContent = data.fechaFin;
+                    document.getElementById('totalVentas').textContent = `$${data.totalVentasSemana.toFixed(2)}`;
+                    document.getElementById('numFacturas').textContent = data.numeroFacturas;
+
+                    const labels = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                    const ventasDiarias = {
+                        'SUNDAY': 0, 'MONDAY': 0, 'TUESDAY': 0, 'WEDNESDAY': 0, 'THURSDAY': 0, 'FRIDAY': 0, 'SATURDAY': 0
+                    };
+                    
+                    for(const [day, total] of Object.entries(data.ventasPorDia)){
+                        ventasDiarias[day] = total;
+                    }
+                    
+                    const datosGrafico = [
+                        ventasDiarias.SUNDAY, ventasDiarias.MONDAY, ventasDiarias.TUESDAY,
+                        ventasDiarias.WEDNESDAY, ventasDiarias.THURSDAY, ventasDiarias.FRIDAY,
+                        ventasDiarias.SATURDAY
+                    ];
+
+                    dibujarGrafico(labels, datosGrafico);
+                    resultadoDiv.style.display = 'block';
+
+                } catch (error) {
+                    console.error('Error al generar el reporte:', error);
+                    alert('No se pudo generar el reporte.');
+                }
+            });
+
+            function dibujarGrafico(labels, data) {
+                const ctx = document.getElementById('graficoVentas').getContext('2d');
+                
+                if (grafico) {
+                    grafico.destroy();
+                }
+
+                grafico = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Ventas por Día',
+                            data: data,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+        </script>
+    </div>
+</body>
+</html>
